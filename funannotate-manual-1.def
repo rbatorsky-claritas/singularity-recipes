@@ -1,0 +1,124 @@
+BootStrap: debootstrap
+OSVersion: xenial
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/
+
+%setup
+    # commands to be executed on host outside container during bootstrap
+
+%post
+	sed -i 's/$/ universe/' /etc/apt/sources.list
+	sed -i 's/$/ multiverse/' /etc/apt/sources.list
+
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8
+dpkg-reconfigure locales
+
+
+     echo "**** *locale before"
+     locale
+#     add-apt-repository ppa:webupd8team/java
+     apt-get -y update
+     apt-get -y install vim wget perl python python-pip python-dev unzip pciutils xdg-utils hicolor-icon-theme x11-apps xterm xauth firefox python-numpy python-qt4 python-lxml python-six tcsh libncurses-dev libbz2-dev liblzma-dev automake cmake *hdf5* libbamtools-dev  libboost-iostreams-dev zlib1g-dev libmysqlclient-dev mysql*5.6* mysql-common default-jre samtools bamtools libmysql++-dev libgsl-dev libboost-graph-dev libsuitesparse-dev liblpsolve55-dev rsync git
+     apt-get -y -f install # clean up shit
+
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8
+dpkg-reconfigure locales
+
+	echo "**** *locale after"
+        locale
+	
+        mkdir /cluster /cluster/home /cluster/shared /cluster/kappa /opt/shared /scratch
+
+	mkdir /scratch/funannotate-deps
+
+	export WORKDIR=/scratch
+
+	cd $WORKDIR
+
+	pip install scipy
+	pip install tensorflow
+	pip install mysql-python
+	pip install biopython
+	pip install goatools
+	pip install --upgrade pip==9.0.1
+	pip install matplotlib
+	pip install psutil
+	pip install requests
+	pip install scikit-learn
+	pip install seaborn
+	pip install natsort
+	cpan install CJFIELDS/BioPerl-1.007002.tar.gz
+	cpan install DBD::mysql
+	cpan install Logger::Simple
+	cpan install Hash::Merge
+	cpan install Parallel::ForkManager
+	cpan install Scalar::Util::Numeric
+	cpan install Text::Soundex  
+
+	wget -P $WORKDIR/funannotate-deps ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/ncbi-blast-2.2.28+-x64-linux.tar.gz
+	tar zxvf $WORKDIR/funannotate-deps/ncbi-blast-2.2.28+-x64-linux.tar.gz
+	wget -P $WORKDIR/funannotate-deps ftp://ftp.ncbi.nlm.nih.gov/blast/executables/rmblast/2.2.28/ncbi-rmblastn-2.2.28-x64-linux.tar.gz
+	tar zxfv $WORKDIR/funannotate-deps/ncbi-rmblastn-2.2.28-x64-linux.tar.gz
+	mkdir /usr/local/bin/blast-2.2.28
+	cp -p ncbi-blast-2.2.28+/bin/* /usr/local/bin/blast-2.2.28/
+ 	cp -p ncbi-rmblastn-2.2.28/bin/* /usr/local/bin/blast-2.2.28/
+
+	cd $WORKDIR/funannotate-deps
+	git clone https://github.com/pachterlab/kallisto.git
+	git clone https://github.com/samtools/htslib
+ 	wget http://github.com/bbuchfink/diamond/archive/v0.9.23.tar.gz
+
+	#EVidence modeler
+	cd $WORKDIR/funannotate-deps
+	wget https://github.com/nextgenusfs/EVidenceModeler/archive/0.1.3.tar.gz && tar -zxvf 0.1.3.tar.gz && rm 0.1.3.tar.gz && mv EVidenceModeler-0.1.3 evidencemodeler
+
+	#Trinity
+	cd $WORKDIR/funannotate-deps
+	wget https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.5.1.tar.gz && tar -zxvf Trinity-v2.5.1.tar.gz && rm Trinity-v2.5.1.tar.gz && mv trinityrnaseq-Trinity-v2.5.1 Trinity && cd Trinity && make && make plugins
+
+	#PASA
+	cd $WORKDIR/funannotate-deps
+	wget https://github.com/PASApipeline/PASApipeline/archive/pasa-v2.2.0.tar.gz && tar -zxvf pasa-v2.2.0.tar.gz && rm pasa-v2.2.0.tar.gz && mv PASApipeline-pasa-v2.2.0 PASApipeline && cd PASApipeline && make clean && make
+
+
+
+
+%environment
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+export FUNANNOTATE_DB=/path/to/dir
+export PASAHOME=/path/to/dir
+export TRINITYHOME=/usr/local/bin
+export EVM_HOME=/path/to/dir
+export AUGUSTUS_CONFIG_PATH=/opt/augustus-3.2.3/config
+export GENEMARK_PATH=/path/to/dir
+export BAMTOOLS_PATH=/usr/bin/bamtools
+export PERL5LIB=/usr/bin/perl5.22-x86_64-linux-gnu:/usr/local/bin/trinityrnaseq-Trinity-v2.8.4/PerlLib:/usr/local/bin/trinityrnaseq-Trinity-v2.8.4/trinity-plugins
+
+%runscript
+    # commands to be executed when the container runs
+export USER=`whoami`
+export WORKDIR=/cluster/shared/$USER
+
+#cp gm_key_64.gz /cluster/shared/`whoami`
+#cp signalp-4.1c.Linux.tar.Z /cluster/shared/`whoami`
+#cp RepBaseRepeatMaskerEdition-20170127.tar.gz /cluster/shared/`whoami`
+
+#cd /cluster/shared/`whoami`
+#zcat gm_key_64.gz > .gm_key && zcat signalp-4.1c.Linux.tar.Z | tar -xvf - && sed -i 's,/usr/cbs/bio/src/signalp-4.1,/cluster/shared/`whoami`/signalp-4.1,g' signalp-4.1/signalp
+
+#tar -zxvf RepBaseRepeatMaskerEdition-20170127.tar.gz -C /cluster/shared/`whoami`/repeatmasker && \
+#rm -rf RepBaseRepeatMaskerEdition-20170127.tar.gz && \
+#cd /cluster/shared/`whoami`/repeatmasker && perl ./configure < /cluster/shared/`whoami`/repeatmasker.txt && \
+#cd /cluster/shared/`whoami`/repeatmodeler && perl ./configure < /cluster/shared/`whoami`/repeatmodeler.txt && \
+#funannotate setup -d /cluster/shared/`whoami`/DB && \
+#mkdir /cluster/shared/`whoami`/data
+
+~
