@@ -1,0 +1,30 @@
+Bootstrap: docker
+
+From: ubuntu:16.04
+
+%post
+	sed -i 's/$/ universe/' /etc/apt/sources.list
+	sed -i 's/$/ multiverse/' /etc/apt/sources.list
+	
+	apt-get -y update
+	apt-get -y install vim wget perl python2.7 python-pip python-dev unzip pciutils xdg-utils hicolor-icon-theme x11-apps xterm xauth firefox python-numpy python-qt4 python-lxml python-six tcsh libncurses-dev libbz2-dev liblzma-dev automake cmake *hdf5* libbamtools-dev  libboost-iostreams-dev zlib1g-dev libmysqlclient-dev mysql*5.6* mysql-common default-jre libmysql++-dev libgsl-dev libboost-graph-dev libsuitesparse-dev liblpsolve55-dev rsync git
+     	apt-get -y -f install
+
+	export LANGUAGE=en_US.UTF-8
+	export LANG=en_US.UTF-8
+	export LC_ALL=en_US.UTF-8
+	locale-gen en_US.UTF-8
+	dpkg-reconfigure locales
+
+        mkdir /cluster /cluster/home /cluster/shared /cluster/kappa /opt/shared /scratch
+	mkdir /scratch/funannotate-deps
+	export WORKDIR=/scratch
+	cd $WORKDIR
+
+%environment
+
+
+%runscript
+
+	conda list
+~
